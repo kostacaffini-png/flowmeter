@@ -525,5 +525,311 @@ document.getElementById('btnCalc').addEventListener('click', recalcCalib);
 
 applyLanguage(currentLang);
 </script>
+
+<script>
+// ===== Tutorial: copione di questa pagina (testi nelle 5 lingue + azioni dimostrative) =====
+(function(){
+  const ids = ['litri-caricati','litri-contati','costante-attuale'];
+  const g = id => document.getElementById(id);
+  window.CAFFINI_TOUR = {
+    id:'flussometro',
+    texts:{
+      it:{ s1:'Questo strumento calcola la nuova costante del flussometro dopo la prova di calibrazione.',
+           s2:'Qui trovi la procedura passo-passo da eseguire sulla macchina prima del calcolo.',
+           s3:'Inserisci i litri realmente caricati nel serbatoio: di norma 200.',
+           s4:'Poi i litri contati dal computer, cioè il «Volume Erogato», e la costante attuale del sensore.',
+           s5:'Premi «Calcola Nuova Costante».',
+           s6:'Ecco la nuova costante da impostare sul computer, con lo scarto rilevato tra litri caricati e litri contati.' },
+      en:{ s1:'This tool calculates the new flow meter constant after the calibration test.',
+           s2:'Here you find the step-by-step procedure to carry out on the machine before the calculation.',
+           s3:'Enter the litres actually loaded into the tank: normally 200.',
+           s4:'Then the litres counted by the computer, i.e. the “Volume Dispensed”, and the current sensor constant.',
+           s5:'Press “Calculate New Constant”.',
+           s6:'Here is the new constant to set on the computer, with the deviation between loaded and counted litres.' },
+      es:{ s1:'Esta herramienta calcula la nueva constante del caudalímetro tras la prueba de calibración.',
+           s2:'Aquí tienes el procedimiento paso a paso que hay que realizar en la máquina antes del cálculo.',
+           s3:'Introduce los litros realmente cargados en el depósito: normalmente 200.',
+           s4:'Después los litros contados por el ordenador, es decir el «Volumen Suministrado», y la constante actual del sensor.',
+           s5:'Pulsa «Calcular Nueva Constante».',
+           s6:'Esta es la nueva constante a configurar en el ordenador, con la desviación entre litros cargados y contados.' },
+      de:{ s1:'Dieses Tool berechnet nach dem Kalibriertest die neue Konstante des Durchflussmessers.',
+           s2:'Hier finden Sie die Schritt-für-Schritt-Anleitung, die vor der Berechnung an der Maschine auszuführen ist.',
+           s3:'Geben Sie die tatsächlich in den Tank gefüllten Liter ein: in der Regel 200.',
+           s4:'Dann die vom Computer gezählten Liter, also die „Ausgebrachte Menge“, und die aktuelle Sensorkonstante.',
+           s5:'Drücken Sie „Neue Konstante berechnen“.',
+           s6:'Hier ist die neue Konstante für den Computer, mit der Abweichung zwischen eingefüllten und gezählten Litern.' },
+      fr:{ s1:'Cet outil calcule la nouvelle constante du débitmètre après l’essai d’étalonnage.',
+           s2:'Vous trouvez ici la procédure pas à pas à effectuer sur la machine avant le calcul.',
+           s3:'Saisissez les litres réellement chargés dans la cuve : normalement 200.',
+           s4:'Puis les litres comptés par l’ordinateur, c’est-à-dire le « Volume Distribué », et la constante actuelle du capteur.',
+           s5:'Appuyez sur « Calculer la Nouvelle Constante ».',
+           s6:'Voici la nouvelle constante à régler sur l’ordinateur, avec l’écart entre litres chargés et litres comptés.' }
+    },
+    steps:[
+      { text:'s1' },
+      { text:'s2', el:'#stepsToggle', run: async a => {
+          if (!g('stepsBody').classList.contains('open')) await a.click('#stepsToggle');
+          a.spot('#stepsBody'); await a.wait(3200);
+          await a.click('#stepsToggle'); a.spot('#stepsToggle'); } },
+      { text:'s3', el:() => g('litri-caricati').closest('.field'), run: async a => { await a.type('#litri-caricati', 200); } },
+      { text:'s4', el:() => g('litri-contati').closest('.card'), run: async a => { await a.type('#litri-contati', 185); await a.type('#costante-attuale', 480); } },
+      { text:'s5', el:'#btnCalc', run: async a => { await a.click('#btnCalc'); } },
+      { text:'s6', el:'#res-calib' }
+    ],
+    snapshot(){ return { v:ids.map(id => g(id).value), res:g('res-calib').classList.contains('active'), open:g('stepsBody').className, tog:g('stepsToggle').className }; },
+    prepare(){ g('litri-caricati').value = ''; g('litri-contati').value = ''; g('costante-attuale').value = ''; g('res-calib').classList.remove('active'); },
+    restore(o){ if (!o) return; ids.forEach((id, i) => { g(id).value = o.v[i]; });
+      g('res-calib').classList.remove('active'); if (o.res) g('btnCalc').click();
+      g('stepsBody').className = o.open; g('stepsToggle').className = o.tog; }
+  };
+})();
+</script>
+<!-- ===== TUTORIAL ANIMATO (stile video) — motore comune a tutti i tool CAFFINI ===== -->
+<style>
+  .tut-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 7px;border-radius:999px;border:1px solid var(--accent,#00952b);
+    background:var(--panel,#1e2126);color:var(--text,#eef0f2);font:700 11px 'Inter',sans-serif;letter-spacing:.02em;cursor:pointer;white-space:nowrap;}
+  .tut-btn i{width:18px;height:18px;border-radius:50%;background:var(--accent,#00952b);color:#fff;font-style:normal;font-size:8px;
+    display:inline-flex;align-items:center;justify-content:center;padding-left:1px;}
+  .tut-btn:active{opacity:.8;}
+  @media (max-width:359px){.tut-btn span{display:none;}.tut-btn{padding:6px 7px;}}
+  @media (min-width:1100px){.app-head .tut-btn{grid-column:3;grid-row:1;justify-self:end;margin-right:44px;}}
+  #tutRoot[hidden]{display:none;}
+  .tut-block{position:fixed;inset:0;z-index:2990;background:transparent;}
+  .tut-spot{position:fixed;z-index:2991;border-radius:12px;pointer-events:none;
+    box-shadow:0 0 0 3px var(--accent,#00952b),0 0 0 200vmax rgba(8,10,12,.66);}
+  .tut-spot.none{box-shadow:0 0 0 200vmax rgba(8,10,12,.66);}
+  .tut-cur{position:fixed;left:0;top:0;z-index:2993;width:26px;height:26px;pointer-events:none;opacity:0;transition:opacity .25s;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}
+  .tut-cur.on{opacity:1;}
+  .tut-cur svg{display:block;width:26px;height:26px;}
+  .tut-rip{position:fixed;z-index:2992;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;pointer-events:none;
+    border:3px solid var(--accent,#00952b);animation:tutRip .55s ease-out forwards;}
+  @keyframes tutRip{from{transform:scale(.4);opacity:1;}to{transform:scale(4.2);opacity:0;}}
+  .tut-bar{position:fixed;z-index:2994;left:50%;transform:translateX(-50%);bottom:14px;width:calc(100% - 20px);max-width:760px;
+    background:#101215;color:#f2f4f6;border:1px solid #2c3138;border-radius:14px;overflow:hidden;
+    box-shadow:0 14px 44px rgba(0,0,0,.55);font-family:'Inter',sans-serif;transition:top .3s,bottom .3s;}
+  .tut-bar.top{bottom:auto;top:14px;}
+  .tut-prog{height:4px;background:#2c3138;}
+  .tut-prog b{display:block;height:100%;width:0;background:#00b233;transition:width .45s linear;}
+  .tut-body{padding:13px 14px 11px;}
+  .tut-kick{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#4cc46c;margin-bottom:5px;
+    display:flex;justify-content:space-between;gap:10px;}
+  .tut-kick span:last-child{color:#8d949e;font-family:'Roboto Mono',monospace;letter-spacing:0;}
+  .tut-text{font-size:15.5px;line-height:1.45;font-weight:500;min-height:2.9em;}
+  .tut-ctl{display:flex;align-items:center;gap:8px;margin-top:10px;}
+  .tut-ctl button{height:36px;min-width:42px;padding:0 12px;border-radius:9px;border:1px solid #3a4048;background:#1b1e23;color:#f2f4f6;
+    font:600 13px 'Inter',sans-serif;cursor:pointer;}
+  .tut-ctl button:active{opacity:.75;}
+  .tut-ctl .tut-pp{background:#00952b;border-color:#00952b;min-width:52px;}
+  .tut-ctl .tut-x{margin-left:auto;}
+  .tut-ov{position:fixed;inset:0;z-index:3000;background:rgba(8,10,12,.66);display:flex;align-items:center;justify-content:center;padding:20px;}
+  .tut-card{background:var(--panel,#1e2126);color:var(--text,#eef0f2);border:1px solid var(--line,#33383f);border-radius:16px;
+    padding:22px;max-width:400px;width:100%;text-align:center;box-shadow:0 14px 44px rgba(0,0,0,.5);font-family:'Inter',sans-serif;}
+  .tut-play{width:64px;height:64px;border-radius:50%;background:var(--accent,#00952b);color:#fff;font-size:24px;margin:0 auto 14px;
+    display:flex;align-items:center;justify-content:center;padding-left:5px;}
+  .tut-card h3{font-family:'Oswald',sans-serif;font-size:19px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;margin:0 0 8px;}
+  .tut-card p{font-size:14px;line-height:1.5;color:var(--text-dim,#9aa1ab);margin:0 0 18px;}
+  .tut-card .tut-acts{display:flex;gap:10px;}
+  .tut-card button{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--line,#33383f);background:var(--panel-2,#262a31);
+    color:var(--text,#eef0f2);font:600 14px 'Inter',sans-serif;cursor:pointer;}
+  .tut-card button.pri{background:var(--accent,#00952b);border-color:var(--accent,#00952b);color:#fff;}
+  @media print{.tut-btn,#tutRoot,.tut-ov{display:none !important;}}
+  @media (prefers-reduced-motion:reduce){.tut-rip{animation:none;opacity:0;}}
+</style>
+<script>
+(function(){
+  'use strict';
+  const C = window.CAFFINI_TOUR; if (!C) return;
+  const L = {
+    it:{ btn:'Tutorial', kick:'Video tutorial', wTitle:'Video tutorial', wText:'Prima volta qui? Guarda in circa un minuto come funziona questa pagina. I valori mostrati sono solo di esempio.',
+         watch:'▶ Guarda', skip:'Salta', eTitle:'Fine del tutorial', eText:'Puoi rivederlo quando vuoi con il pulsante «Tutorial» in alto.', replay:'Rivedi', close:'Chiudi' },
+    en:{ btn:'Tutorial', kick:'Video tutorial', wTitle:'Video tutorial', wText:'First time here? See how this page works in about one minute. The values shown are examples only.',
+         watch:'▶ Watch', skip:'Skip', eTitle:'End of tutorial', eText:'You can watch it again any time with the “Tutorial” button at the top.', replay:'Replay', close:'Close' },
+    es:{ btn:'Tutorial', kick:'Videotutorial', wTitle:'Videotutorial', wText:'¿Primera vez aquí? Mira en aproximadamente un minuto cómo funciona esta página. Los valores mostrados son solo de ejemplo.',
+         watch:'▶ Ver', skip:'Omitir', eTitle:'Fin del tutorial', eText:'Puedes volver a verlo cuando quieras con el botón «Tutorial» de arriba.', replay:'Repetir', close:'Cerrar' },
+    de:{ btn:'Tutorial', kick:'Video-Tutorial', wTitle:'Video-Tutorial', wText:'Zum ersten Mal hier? In etwa einer Minute sehen Sie, wie diese Seite funktioniert. Die gezeigten Werte sind nur Beispiele.',
+         watch:'▶ Ansehen', skip:'Überspringen', eTitle:'Ende des Tutorials', eText:'Über die Schaltfläche „Tutorial“ oben können Sie es jederzeit erneut ansehen.', replay:'Wiederholen', close:'Schließen' },
+    fr:{ btn:'Tutoriel', kick:'Tutoriel vidéo', wTitle:'Tutoriel vidéo', wText:"Première visite ? Découvrez en une minute environ comment fonctionne cette page. Les valeurs affichées sont de simples exemples.",
+         watch:'▶ Regarder', skip:'Passer', eTitle:'Fin du tutoriel', eText:'Vous pouvez le revoir à tout moment avec le bouton « Tutoriel » en haut.', replay:'Revoir', close:'Fermer' }
+  };
+  const lang = () => { try { return (typeof currentLang === 'string' && L[currentLang]) ? currentLang : 'it'; } catch (e) { return 'it'; } };
+  const U = k => L[lang()][k];
+  const TX = k => { const d = C.texts[lang()] || C.texts.it; return d[k] || C.texts.it[k] || ''; };
+  const q = s => typeof s === 'function' ? s() : typeof s === 'string' ? document.querySelector(s) : s;
+  const safe = f => { try { return f && f(); } catch (e) { console.error('[tutorial]', e); } };
+  const fire = (e, t) => e.dispatchEvent(new Event(t, { bubbles:true }));
+  const CANCEL = {};
+
+  // ---- pulsante "Tutorial" nella barra in alto ----
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'tut-btn'; btn.id = 'tutBtn';
+  btn.innerHTML = '<i>▶</i><span></span>';
+  const bar0 = document.querySelector('.settings-bar'), themeBtn = document.getElementById('themeToggle');
+  if (bar0 && themeBtn && themeBtn.parentNode === bar0) bar0.insertBefore(btn, themeBtn); else document.body.appendChild(btn);
+  const setBtnLabel = () => { btn.querySelector('span').textContent = U('btn'); };
+  setBtnLabel();
+  document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => setTimeout(setBtnLabel, 0)));
+
+  // ---- elementi del player ----
+  const root = document.createElement('div'); root.id = 'tutRoot'; root.hidden = true;
+  root.innerHTML = '<div class="tut-block"></div><div class="tut-spot none"></div>' +
+    '<div class="tut-cur"><svg viewBox="0 0 26 26"><path d="M4 2 L4 21 L9.2 16.4 L12.6 24 L16 22.5 L12.7 15 L19.5 14.6 Z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/></svg></div>' +
+    '<div class="tut-bar" role="dialog" aria-live="polite"><div class="tut-prog"><b></b></div><div class="tut-body">' +
+    '<div class="tut-kick"><span class="tut-k"></span><span class="tut-n"></span></div><div class="tut-text"></div>' +
+    '<div class="tut-ctl"><button type="button" class="tut-prev" aria-label="Indietro">⏮</button><button type="button" class="tut-pp" aria-label="Pausa">❚❚</button>' +
+    '<button type="button" class="tut-next" aria-label="Avanti">⏭</button><button type="button" class="tut-x"></button></div></div></div>';
+  document.body.appendChild(root);
+  const spot = root.querySelector('.tut-spot'), cursor = root.querySelector('.tut-cur'), bar = root.querySelector('.tut-bar');
+  const elText = root.querySelector('.tut-text'), elN = root.querySelector('.tut-n'), elProg = root.querySelector('.tut-prog b'), elPP = root.querySelector('.tut-pp');
+
+  let active = false, paused = false, token = 0, idx = 0, snap = null, ov = null;
+  let targetFn = null, curFn = null, box = null, cur = { x:0, y:0 }, frameN = 0;
+
+  function frame(){
+    if (!active) return;
+    const t = targetFn ? safe(targetFn) : null;
+    let r;
+    if (t && t.isConnected && t.getClientRects().length) {
+      const b = t.getBoundingClientRect();
+      r = { x:b.left - 6, y:b.top - 6, w:b.width + 12, h:b.height + 12 };
+      spot.classList.remove('none');
+    } else { r = { x:innerWidth / 2, y:innerHeight / 2, w:0, h:0 }; spot.classList.add('none'); }
+    if (!box) box = r; else ['x','y','w','h'].forEach(k => { box[k] += (r[k] - box[k]) * 0.2; });
+    spot.style.left = box.x + 'px'; spot.style.top = box.y + 'px'; spot.style.width = box.w + 'px'; spot.style.height = box.h + 'px';
+    const p = curFn ? safe(curFn) : null;
+    if (p) { cur.x += (p.x - cur.x) * 0.17; cur.y += (p.y - cur.y) * 0.17; }
+    cursor.style.transform = 'translate(' + (cur.x - 4) + 'px,' + (cur.y - 2) + 'px)';
+    if (++frameN % 20 === 0 && r.w) bar.classList.toggle('top', (r.y + r.h / 2) > innerHeight * 0.52);
+    requestAnimationFrame(frame);
+  }
+  function sleep(ms, tk){
+    return new Promise((res, rej) => {
+      let t = 0;
+      const id = setInterval(() => {
+        if (tk !== token) { clearInterval(id); rej(CANCEL); return; }
+        if (!paused) t += 50;
+        if (t >= ms) { clearInterval(id); res(); }
+      }, 50);
+    });
+  }
+  function reveal(e){
+    if (!e || !e.getBoundingClientRect) return;
+    const b = e.getBoundingClientRect();
+    if (b.top < 70 || b.bottom > innerHeight - 190) e.scrollIntoView({ block: b.height > innerHeight * 0.6 ? 'start' : 'center', behavior:'smooth' });
+  }
+  function ripple(){
+    const r = document.createElement('div'); r.className = 'tut-rip';
+    r.style.left = cur.x + 'px'; r.style.top = cur.y + 'px';
+    root.appendChild(r); setTimeout(() => r.remove(), 600);
+  }
+  const api = tk => ({
+    $: q,
+    wait: ms => sleep(ms, tk),
+    spot: s => { targetFn = () => q(s); reveal(q(s)); },
+    async point(s){
+      reveal(q(s)); await sleep(250, tk);
+      curFn = () => { const e = q(s); if (!e) return null; const b = e.getBoundingClientRect(); return { x:b.left + b.width / 2, y:b.top + b.height / 2 }; };
+      cursor.classList.add('on'); await sleep(700, tk);
+    },
+    async click(s){ await this.point(s); ripple(); await sleep(170, tk); const e = q(s); if (e) e.click(); await sleep(380, tk); },
+    async type(s, val){
+      await this.point(s); ripple();
+      const e = q(s); if (!e) return;
+      e.value = ''; fire(e, 'input'); await sleep(200, tk);
+      let acc = '';
+      for (const ch of String(val)) {
+        acc += ch;
+        if (/[.,]$/.test(acc)) continue;          // i campi numerici rifiutano "2."
+        const e2 = q(s); if (!e2) return;
+        e2.value = acc; fire(e2, 'input'); await sleep(130, tk);
+      }
+      await sleep(260, tk);
+    }
+  });
+
+  function showStep(i){
+    const n = C.steps.length;
+    elText.textContent = TX(C.steps[i].text);
+    elN.textContent = (i + 1) + ' / ' + n;
+    root.querySelector('.tut-k').textContent = U('kick');
+    root.querySelector('.tut-x').textContent = U('close');
+    elProg.style.width = ((i + 1) / n * 100) + '%';
+  }
+  async function runStep(i){
+    const tk = ++token; idx = i;
+    const st = C.steps[i];
+    showStep(i);
+    curFn = null; cursor.classList.remove('on');
+    try {
+      if (st.before) safe(st.before);
+      targetFn = st.el ? () => q(st.el) : null;
+      if (st.el) { reveal(q(st.el)); await sleep(650, tk); } else await sleep(300, tk);
+      if (st.run) { try { await st.run(api(tk)); } catch (e) { if (e === CANCEL) throw e; console.error('[tutorial]', e); } }
+      cursor.classList.remove('on');
+      await sleep(st.hold || (1900 + TX(st.text).length * 42), tk);
+      if (i + 1 < C.steps.length) runStep(i + 1); else finish();
+    } catch (e) { if (e !== CANCEL) console.error('[tutorial]', e); }
+  }
+  function setPaused(p){ paused = p; elPP.textContent = p ? '▶' : '❚❚'; }
+  function closeOv(){ if (ov) { ov.remove(); ov = null; } }
+  function card(title, text, a, b, onA, onB){
+    closeOv();
+    ov = document.createElement('div'); ov.className = 'tut-ov';
+    ov.innerHTML = '<div class="tut-card" role="dialog" aria-modal="true"><div class="tut-play">▶</div><h3></h3><p></p>' +
+      '<div class="tut-acts"><button type="button"></button><button type="button" class="pri"></button></div></div>';
+    ov.querySelector('h3').textContent = title; ov.querySelector('p').textContent = text;
+    const bs = ov.querySelectorAll('button');
+    bs[0].textContent = b; bs[1].textContent = a;
+    bs[0].addEventListener('click', onB); bs[1].addEventListener('click', onA);
+    document.body.appendChild(ov); bs[1].focus();
+  }
+  function start(){
+    closeOv();
+    if (!active) snap = safe(C.snapshot);
+    safe(C.prepare);
+    window.scrollTo(0, 0);
+    box = null; cur = { x:innerWidth / 2, y:innerHeight * 0.45 }; targetFn = null; curFn = null;
+    setPaused(false); bar.style.display = '';
+    root.hidden = false;
+    if (!active) { active = true; requestAnimationFrame(frame); }
+    runStep(0);
+  }
+  function stop(){
+    token++; closeOv();
+    active = false; root.hidden = true;
+    safe(() => C.restore && C.restore(snap)); snap = null;
+    window.scrollTo(0, 0);
+  }
+  function finish(){
+    token++; targetFn = null; curFn = null; cursor.classList.remove('on'); bar.style.display = 'none';
+    card(U('eTitle'), U('eText'), U('close'), U('replay'), stop, start);
+  }
+  function welcome(){
+    try { localStorage.setItem(KEY, '1'); } catch (e) {}
+    card(U('wTitle'), U('wText'), U('watch'), U('skip'), start, closeOv);
+  }
+  btn.addEventListener('click', start);
+  root.querySelector('.tut-x').addEventListener('click', stop);
+  elPP.addEventListener('click', () => setPaused(!paused));
+  root.querySelector('.tut-prev').addEventListener('click', () => { setPaused(false); runStep(Math.max(0, idx - 1)); });
+  root.querySelector('.tut-next').addEventListener('click', () => { setPaused(false); if (idx + 1 < C.steps.length) runStep(idx + 1); else finish(); });
+  document.addEventListener('keydown', e => {
+    if (!active) return;
+    if (e.key === 'Escape') stop();
+    else if (e.key === ' ' && !ov) { e.preventDefault(); setPaused(!paused); }
+    else if (e.key === 'ArrowRight' && !ov) root.querySelector('.tut-next').click();
+    else if (e.key === 'ArrowLeft' && !ov) root.querySelector('.tut-prev').click();
+  });
+
+  // ---- primo utilizzo: proposta automatica (una sola volta per dispositivo) ----
+  const KEY = 'caffini_tutorial_' + C.id + '_v1';
+  let seen = false;
+  try { seen = localStorage.getItem(KEY) === '1'; } catch (e) {}
+  const force = /[?&#]tutorial\b/.test(location.search + location.hash);
+  if (!seen || force) setTimeout(welcome, 700);
+  window.CAFFINI_TOUR_START = start;
+})();
+</script>
+
 </body>
 </html>
